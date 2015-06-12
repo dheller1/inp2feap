@@ -1,6 +1,6 @@
 {
 	"input" : "HexCell.inp",
-	"output" : "iTestJson",
+	"output" : "iHexCell",
 	"nodesPerElem" : 4,
 	"header" : "header.inc",
 	"footer" : "footer.inc",
