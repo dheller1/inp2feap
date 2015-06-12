@@ -1,0 +1,34 @@
+{
+	"input" : "HexCell.inp",
+	"output" : "iTestJson",
+	"nodesPerElem" : 4,
+	"header" : "header.inc",
+	"footer" : "footer.inc",
+	"centerMesh" : true,
+	
+	"elsets" : [
+	{
+		"name" : "SET-ELEM_UNTEN",
+		"setMat" : 1
+	},
+	{
+		"name" : "SET-ELEM_OBEN",
+		"setMat" : 2
+	},
+	{
+		"name" : "SET-ELEM_WAENDE",
+		"setMat" : 3
+	}],
+	
+	"customInput" : {
+		"block" : "vbou",
+		"pos" : -1,
+		"cards" : ["-99.,99.,-99.,99.,-99.,99.,0,0,0,0,0,1"]
+	},
+	
+	"nsets" : [
+	{
+		"name" : "SET-NODE-FHG6",
+		"setBoun" : "0, 0, 0, 0, 0, 0"
+	}]
+}
