@@ -49,6 +49,7 @@ class Element:
          self.nodes.append(int(a))
          
       self.matn = 1
+      self.duplicate = []
          
    def __str__(self):
       s = "%8d, %d" % (self.id, self.matn)
@@ -79,6 +80,7 @@ class ElSet:
       self.name = "Unnamed elset"
       self.setMat = None
       self.generate = False
+      self.duplicate = []
       
 class AbaqusMesh:
    def __init__(self):
@@ -250,10 +252,10 @@ class ConfigFileParser:
    CHILD_REQUIRED_VARS = { "elsets" : ["name"],
                            "nsets" :  ["name"],
                            "customInput" : ["block", "pos", "cards"] }
-   CHILD_KNOWN_VARS = { "elsets" : ["name", "setMat"],
+   CHILD_KNOWN_VARS = { "elsets" : ["name", "setMat", "duplicate"],
                         "nsets" :  ["name", "setBoun"],
                         "customInput" : ["block", "pos", "cards"]}
-   CHILD_ASSUMED_TYPES = { "elsets": {"name" : str, "setMat" : int},
+   CHILD_ASSUMED_TYPES = { "elsets": {"name" : str, "setMat" : int, "duplicate" : int},
                            "nsets":  {"name" : str, "setBoun" : str},
                            "customInput" : {"block" : str, "pos" : int, "cards" : list}}
    
@@ -318,6 +320,7 @@ class ConfigFileParser:
                
             if elsetVar == "name": elsetObj.name = str(elsetValue)
             elif elsetVar == "setMat" : elsetObj.setMat = int(elsetValue)
+            elif elsetVar == "duplicate" : elsetObj.duplicate.append( int(elsetValue) )
          
          elsetObjs.append(elsetObj)
          
@@ -431,15 +434,31 @@ class ConfigFileParser:
                   found = True
                   mesh_elset.setMat = conf_elset.setMat
                   print ".Setting material number %d for all elements in elset %s." % (mesh_elset.setMat, mesh_elset.name)
+                  if len(conf_elset.duplicate) > 0:
+                     mesh_elset.duplicate = conf_elset.duplicate
+                     print ".Elset %s will be duplicated (materials %s)." % (mesh_elset.name, conf_elset.duplicate) 
                   break
             if not found: print "Warning: Couldn't find elset '%s' (specified in %s) in mesh %s." % (conf_elset.name, self.confFile, self.inputFile)
-            
+         
          # set element materials according to the elset they belong to
          for e in mesh.elems:
             for elset in mesh.elsets:
                if e.id in elset.elems:
                   e.matn = elset.setMat
-                  break
+                  # duplicate elements in any 'duplicate' elsets
+                  if len(elset.duplicate)>0: e.duplicate = elset.duplicate
+               
+         # duplicate elements
+         newElems = []
+         for e in mesh.elems:
+            if len(e.duplicate)>0:
+               for matn in e.duplicate:
+                  newId = mesh.elems[-1].id + len(newElems) + 1
+                  duplicatedElem = Element(newId, *e.nodes)
+                  duplicatedElem.matn = matn
+                  newElems.append(duplicatedElem)
+                  
+         mesh.elems.extend(newElems)
             
          # assign boundary conditions to mesh's NSETS
          for conf_nset in self.conf_nsets:
