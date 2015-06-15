@@ -48,13 +48,13 @@ In theory, elements with an arbitrary number of nodes can be used as long as a F
 For 2d models, however, the code must be modified.
 
 Mixing elements with different numbers of nodes is not supported.
-*inp2feap* can not distinguish between different parts in a job file, so keep them simple.
+*inp2feap* can not distinguish between different parts in a job file, so keep those simple.
 Only nodes, elements, nsets and elsets will be read from the input file, nothing else (like boundary conditions, loads, etc.)
 
 ## Config file documentation ##
 
 Config files must follow valid JSON syntax.
-Some error handling is present for required/optional parameters as well as data types, but don't rely too much on it.
+Some error handling is present for required/optional parameters as well as data types.
 
 See `examples/honeycomb.json` for an example config file with all required and optional parameters.
 
