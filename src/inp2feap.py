@@ -46,7 +46,7 @@ class Element:
       self.id = int(args[0])
       self.nodes = []
       for a in args[1:]:
-         self.nodes.append(int(a))
+         if type(a) == int or len(a)>0: self.nodes.append(int(a))
          
       self.matn = 1
       self.duplicate = []
@@ -78,7 +78,7 @@ class ElSet:
    def __init__(self, *args):
       self.elems = []
       self.name = "Unnamed elset"
-      self.setMat = None
+      self.setMat = 1
       self.generate = False
       self.duplicate = []
       
@@ -360,6 +360,9 @@ class ConfigFileParser:
       
       self.workingDir = os.path.dirname(os.path.relpath(self.confFile))
       
+      elsetObjs = []
+      nsetObjs = []
+      
       with open(self.confFile, 'r') as f:
          try: conf = json.load(f)
          except: raise BaseException("Couldn't load JSON from %s." % self.confFile)
@@ -410,6 +413,8 @@ class ConfigFileParser:
    
    def _ParseInputFile(self, inputFile):
       ifp = InpFileParser(inputFile)
+      if self.nodesPerElem:
+         ifp.nodesPerElem = self.nodesPerElem
       return ifp.Parse()
    
    def Build(self, confFile=None):
@@ -420,10 +425,13 @@ class ConfigFileParser:
          mesh = self._ParseInputFile(os.path.join(self.workingDir, self.inputFile))
          
          # parse header and footer
-         with open(os.path.join(self.workingDir, self.headerFile), 'r') as f:
-            self.headerString = f.read()
-         with open(os.path.join(self.workingDir, self.footerFile), 'r') as f:
-            self.footerString = f.read()
+         
+         if self.headerFile: 
+            with open(os.path.join(self.workingDir, self.headerFile), 'r') as f:
+               self.headerString = f.read()
+         if self.footerFile:
+            with open(os.path.join(self.workingDir, self.footerFile), 'r') as f:
+               self.footerString = f.read()
          
          # assign materials to mesh's ELSETS
          for conf_elset in self.conf_elsets:
@@ -500,7 +508,7 @@ class ConfigFileParser:
          # write output
          with open(self.outputFile, 'w') as f:
             # write header
-            f.write(self.headerString)
+            if self.headerFile: f.write(self.headerString)
             
             # write nodes
             f.write('coor\n')
@@ -532,7 +540,7 @@ class ConfigFileParser:
                f.write('\n')
             
             # write footer
-            f.write(self.footerString)
+            if self.footerFile: f.write(self.footerString)
             
             print "File %s written." % self.outputFile
          

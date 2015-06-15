@@ -13,7 +13,8 @@
 	},
 	{
 		"name" : "SET-ELEM_OBEN",
-		"setMat" : 2
+		"setMat" : 2,
+		"duplicate" : 4
 	},
 	{
 		"name" : "SET-ELEM_WAENDE",
