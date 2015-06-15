@@ -43,7 +43,7 @@ To build the according FEAP input file for this example, just type:
 
 ## Limitations and issues ##
 
-As of now, *inp2feap* has only been tested with 3d 4-node quadrilaterals.  
+As of now, *inp2feap* has only been tested with some elements, such as 3d 4-node quadrilaterals or 20-node volume elements.  
 In theory, elements with an arbitrary number of nodes can be used as long as a FEAP element is present with a compatible node numbering.
 For 2d models, however, the code must be modified.
 
