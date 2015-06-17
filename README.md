@@ -58,7 +58,7 @@ Only nodes, elements, nsets and elsets will be read from the input file, nothing
 Config files must follow valid JSON syntax.
 Some error handling is present for required/optional parameters as well as data types.
 
-See `examples/honeycomb.json` for an example config file with all required and optional parameters.
+See `examples/hex.json` for an example config file with most required and optional parameters or the other, more simple examples in the same folder.
 
 The following parameters can be used to specify *inp2feap*'s behavior:
 
