@@ -16,17 +16,19 @@ Element material numbers can be specified using Abaqus's element sets (*elsets*)
 
 ## Example ##
 
-As an example we consider a shell discretization of a representative unit cell in a honeycomb sandwich panel.
-The Abaqus job file is given in `examples/HexCell.inp`, it contains all nodes and elements, three element sets (`SET-ELEM_UNTEN`, `SET-ELEM_OBEN`, representing upper and lower face layers of the sandwich panel, and `SET-ELEM_WAENDE` for the cell walls), as well as a node set `SET-NODE-FHG6`, specifying some nodes where additional boundary conditions have to be set.  
+Some simple examples are given in the `example` folder.
 
-`example/honeycomb.json` is the accompanying configuration file for this input file.  
+As a comprehensive example we consider a shell discretization of a representative unit cell in a honeycomb sandwich panel, where most available functionality of *inp2feap* is used.
+The Abaqus job file is given in `examples/hex.inp`, it contains all nodes and elements, three element sets (`SET-ELEM_UNTEN`, `SET-ELEM_OBEN`, representing upper and lower face layers of the sandwich panel, and `SET-ELEM_WAENDE` for the cell walls), as well as a node set `SET-NODE-FHG6`, specifying some nodes where additional boundary conditions have to be set.  
+
+`example/hex.json` is the accompanying configuration file for this input file.  
 Going through line by line, making sure to follow the JSON syntax:
  
-- `"input" : "HexCell.inp", `  Specify the Abaqus job input file to read from.  
-- `"output" : "iHexCell", ` File to write to (FEAP input file).
+- `"input" : "hex.inp", `  Specify the Abaqus job input file to read from.  
+- `"output" : "iHex", ` File to write to (FEAP input file).
 - `"nodesPerElem" : 4, ` Specify number of nodes per element (4-node quadrilateral here).
-- `"header" : "header.inc", ` Contents of this file will be inserted before any generated `coor`/`elem` blocks.
-- `"footer" : "footer.inc", ` Accordingly, contents of this file will be appended after any generated blocks. Here, the footer contains among other things the material definitions used in FEAP.
+- `"header" : "hex.head", ` Contents of this file will be inserted before any generated `coor`/`elem` blocks.
+- `"footer" : "hex.foot", ` Accordingly, contents of this file will be appended after any generated blocks. Here, the footer contains among other things the material definitions used in FEAP.
 - `"centerMesh" : true, ` Optional. Allows to translate the origin to the center of the bounding box of all nodes.
 - `"elsets" : [ { "name" : "SET-ELEM_UNTEN", "setMat" : 1 }, { "name" : "SET-ELEM_OBEN", "setMat" : 2 },`
   `  { "name" : "SET-ELEM_WAENDE", "setMat" : 3 }],`  
@@ -39,7 +41,7 @@ Going through line by line, making sure to follow the JSON syntax:
 **Note:** All file paths are relative to the `.json` config file.
 
 To build the according FEAP input file for this example, just type:  
-  `python inp2feap.py ../example/honeycomb.json`
+  `python inp2feap.py ../example/hex.json`
 
 ## Limitations and issues ##
 
@@ -68,7 +70,7 @@ The following parameters can be used to specify *inp2feap*'s behavior:
 - `"elsets"` - optional. If specified, must contain an array of element sets which each have a `"name"` (string) and `"setMat"` (int) parameter. *inp2feap* will look for elsets with the given name in the input file and assign the given material number to all elements in that elset.  
 May have optional `"duplicate"` (int) parameter - if given, elements in this set will be duplicated using the specified int as new material number. This can be used for the FEAP loading element 30. Elements may be duplicated multiple times if multiple `"duplicate"` parameters are given.     
 A warning will be issued should an element set specified in the config file not be found in the job file.
-- `"nsets"` - optional. If specified, must contain an array of node sets which each have a `"name"` (string) and may have a `"setBoun"` (string) parameter. If `"setBoun"` is given, a `boun` block will be written to the output file, where each node in this node set has its boundary conditions set to the value of `"setBoun"`. Consult the FEAP manual for information on how the syntax must look like.  
+- `"nsets"` - optional. If specified, must contain an array of node sets which each have a `"name"` (string) and may have `"setBoun"` (string) and `"setLoad"` (string) parameters. If `"setBoun"` is given, a `boun` block will be written to the output file, where each node in this node set has its boundary conditions set to the value of `"setBoun"`. Accordingly, with `"setLoad"` FEAP `load` blocks will be written for each node in this set. Consult the FEAP manual for information on how the syntax must look like.  
 A warning will be issued should a node set specified in the config file not be found in the job file.
 - `"customInput"` - optional, may occur multiple times. If specified, must contain a child object with `"block"` (string), `"pos"` (int) and `"cards"` (array of strings) parameters. `"block"` should be a FEAP mesh command (e.g. `"vbou"`) which will be written to the output file, using the input cards `"cards"`. If `"pos"`<0, the block will be written in between `elem` blocks and automatically generated `boun` blocks from `"nsets"`. For `"pos"`>0, the block will be written after the `boun` blocks but before the footer. Multiple `"customInput`"s will be written in ascending order of their `"pos"`.
 - `"centerMesh"` - optional (true/false). If specified and true, the origin of the coordinate system will be translated to the center of the bounding box of all nodes.

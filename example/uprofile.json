@@ -1,0 +1,18 @@
+{
+	"input" : "uprofile.inp",
+	"output" : "iUProfile",
+	"nodesPerElem" : 4,
+	"header" : "uprofile.head",
+	"footer" : "uprofile.foot",
+	"centerMesh" : true,
+	
+	"nsets" : [
+	{
+		"name" : "NODE_LAST",
+		"setLoad" : "0, -0.0001, 0"
+	},
+	{
+		"name" : "NODE_BOUN",
+		"setBoun" : "1, 1, 1, 1, 1, 1"
+	}]
+}

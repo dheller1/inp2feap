@@ -62,15 +62,20 @@ class NodeSet:
       self.nodes = []
       self.name = "Unnamed nset"
       self.setBoun = ""
+      self.setLoad = ""
       
    def __str__(self):
-      if len(self.setBoun) == 0: return
-      
       self.nodes = sorted(self.nodes)
       
-      s = "boun ** NSET=%s\n" % self.name 
-      for node in self.nodes:
-         s += "%d, 0, %s\n" % (node, self.setBoun)
+      if len(self.setBoun) > 0:
+         s = "boun ** NSET=%s\n" % self.name 
+         for node in self.nodes:
+            s += "%d, 0, %s\n" % (node, self.setBoun)
+      
+      if len(self.setLoad) > 0:
+         s = "load ** NSET=%s\n" % self.name 
+         for node in self.nodes:
+            s += "%d, 0, %s\n" % (node, self.setLoad)
       
       return s
 
@@ -122,14 +127,14 @@ class InpFileParser:
          for lineNumber, line in enumerate(f.readlines()):
             #print lineNumber, line
             if line.startswith("*"):
-               if line.startswith("*Node"):
+               if line.strip().split(',')[0] == "*Node":
                   readMode = InpFileParser.READ_NODES
                   continue
-               elif line.startswith("*Element"):
+               elif line.strip().split(',')[0] == "*Element":
                   readMode = InpFileParser.READ_ELEMS
                   elemInput = [] # list of all integer values read while in READ_ELEMS mode
                   continue
-               elif line.startswith("*Nset"):
+               elif line.strip().split(',')[0] == "*Nset":
                   readMode = InpFileParser.READ_NSET
                   curNset = NodeSet()
                   nsetName = "UNKNOWN_NSET"
@@ -143,7 +148,7 @@ class InpFileParser:
                         
                   curNset.name = nsetName
                   nsets.append(curNset)
-               elif line.startswith("*Elset"):
+               elif line.strip().split(',')[0] == "*Elset":
                   readMode = InpFileParser.READ_ELSET
                   curElset = ElSet()
                   elsetName = "UNKNOWN_ELSET"
@@ -253,10 +258,10 @@ class ConfigFileParser:
                            "nsets" :  ["name"],
                            "customInput" : ["block", "pos", "cards"] }
    CHILD_KNOWN_VARS = { "elsets" : ["name", "setMat", "duplicate"],
-                        "nsets" :  ["name", "setBoun"],
+                        "nsets" :  ["name", "setBoun", "setLoad"],
                         "customInput" : ["block", "pos", "cards"]}
    CHILD_ASSUMED_TYPES = { "elsets": {"name" : str, "setMat" : int, "duplicate" : int},
-                           "nsets":  {"name" : str, "setBoun" : str},
+                           "nsets":  {"name" : str, "setBoun" : str, "setLoad" : str},
                            "customInput" : {"block" : str, "pos" : int, "cards" : list}}
    
    def __init__(self, confFile=None):
@@ -348,6 +353,7 @@ class ConfigFileParser:
                
             if nsetVar == "name": nsetObj.name = str(nsetValue)
             elif nsetVar == "setBoun" : nsetObj.setBoun = str(nsetValue)
+            elif nsetVar == "setLoad" : nsetObj.setLoad = str(nsetValue)
          
          nsetObjs.append(nsetObj)
          
@@ -365,7 +371,7 @@ class ConfigFileParser:
       
       with open(self.confFile, 'r') as f:
          try: conf = json.load(f)
-         except: raise BaseException("Couldn't load JSON from %s." % self.confFile)
+         except Exception as e: raise BaseException("Couldn't load JSON from %s. " % self.confFile + str(e))
          
          for var in ConfigFileParser.REQUIRED_VARS:
             if var not in conf.keys():
@@ -476,7 +482,9 @@ class ConfigFileParser:
                if conf_nset.name == mesh_nset.name:
                   found = True
                   mesh_nset.setBoun = conf_nset.setBoun
-                  print ".Adding 'boun' card '%s' for all nodes in nset %s." % (mesh_nset.setBoun, mesh_nset.name)
+                  mesh_nset.setLoad = conf_nset.setLoad
+                  if len(conf_nset.setBoun)>0: print ".Adding 'boun' card '%s' for all nodes in nset %s." % (mesh_nset.setBoun, mesh_nset.name)
+                  if len(conf_nset.setLoad)>0: print ".Adding 'load' card '%s' for all nodes in nset %s." % (mesh_nset.setLoad, mesh_nset.name)
                   break
             if not found: print "Warning: Couldn't find nset '%s' (specified in %s) in mesh %s." % (conf_nset.name, self.confFile, self.inputFile)
             
@@ -508,7 +516,7 @@ class ConfigFileParser:
          # write output
          with open(self.outputFile, 'w') as f:
             # write header
-            if self.headerFile: f.write(self.headerString)
+            if self.headerFile: f.write(self.headerString + "\n")
             
             # write nodes
             f.write('coor\n')
@@ -525,9 +533,9 @@ class ConfigFileParser:
                f.write(str(ci))
                f.write('\n')
             
-            # write boun-blocks generated from node sets
+            # write boun/load-blocks generated from node sets
             for nset in mesh.nsets:
-               if len(nset.setBoun)> 0:
+               if len(nset.setBoun)>0 or len(nset.setLoad)>0:
                   f.write('\n')
                   f.write(str(nset))
                   f.write('\n')
@@ -540,7 +548,7 @@ class ConfigFileParser:
                f.write('\n')
             
             # write footer
-            if self.footerFile: f.write(self.footerString)
+            if self.footerFile: f.write("\n" + self.footerString)
             
             print "File %s written." % self.outputFile
          

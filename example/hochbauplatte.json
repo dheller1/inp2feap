@@ -1,0 +1,8 @@
+{
+	"input" : "hochbauplatte.inp",
+	"output" : "iPlatte",
+	"nodesPerElem" : 4,
+	"header" : "hochbauplatte.head",
+	"footer" : "hochbauplatte.foot",
+	"centerMesh" : true
+}

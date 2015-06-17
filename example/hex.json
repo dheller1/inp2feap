@@ -1,9 +1,9 @@
 {
-	"input" : "HexCell.inp",
-	"output" : "iHexCell",
+	"input" : "hex.inp",
+	"output" : "iHex",
 	"nodesPerElem" : 4,
-	"header" : "header.inc",
-	"footer" : "footer.inc",
+	"header" : "hex.head",
+	"footer" : "hex.foot",
 	"centerMesh" : true,
 	
 	"elsets" : [
@@ -13,8 +13,7 @@
 	},
 	{
 		"name" : "SET-ELEM_OBEN",
-		"setMat" : 2,
-		"duplicate" : 4
+		"setMat" : 2
 	},
 	{
 		"name" : "SET-ELEM_WAENDE",
