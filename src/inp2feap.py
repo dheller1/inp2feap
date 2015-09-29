@@ -1,8 +1,26 @@
-'''
-Created on 28.04.2015
+# -*- coding: utf-8 -*-
 
-@author: heller
-'''
+"""
+
+   inp2feap
+   
+   
+   This program is used to convert finite element models from the Abaqus .inp format to a FEAP input file.
+   Its behavior is controlled completely by a configuration file following the JSON-syntax which must be
+   specified when running inp2feap. The configuration file states which .inp file will be read and how
+   exactly it will be processed.
+   See the main documentation for inp2feap on Github for information on how to use as well as possibilities
+   and limitations of the program. Advanced knowledge of finite element methods will probably be required
+   to make any sense of the information.
+   
+   https://www.github.com/dheller1/inp2feap
+   
+   The program is provided as is without any warranties. Feel free to use and/or modify as needed.
+   
+   Dominik Heller, September 2015
+   dominik.heller1@gmail.com
+   
+"""
 
 import os, sys, json
 
@@ -10,6 +28,9 @@ EXIT_SUCCESS = 0
 EXIT_FAILURE = 1
 
 class Node:
+   """ A node in a finite element model is an entity comprising an id for identification and
+   spatial coordinates (x,y) for 2d or (x,y,z) for 3d models, respectively. 
+   Nodes are connected to other nodes via elements to form the finite element mesh. """
    def __init__(self, *args):
       global xMin, xMax, yMin, yMax, zMin, zMax
       
@@ -37,6 +58,20 @@ class Node:
       return s
       
 class Element:
+   """ Nodes in a finite element model are connected via elements to form the mesh.
+   The number of nodes per element (often called 'nel') can vary depending on the
+   type of element (e.g. beam element with 2 nodes, quadrilateral shell element with
+   4 nodes), the order of ansatz functions (quadratic beam: 3 nodes), and more.
+   
+   Currently, all elements in a model read by inp2feap must have the same number of nodes.
+   The order of nodes in the node list is not arbitrary, it can determine the element
+   orientation and might lead to errors if it is set not correctly.
+   
+   Important member variables:
+      - id        (int)            Unique id to distinguish each element
+      - nodes     (list of ints)   List of node IDs belonging to the element
+      - matn      (int)            Can be used to assign each element a distinct material number in FEAP
+   """
    def __init__(self, *args):
       if len(args) < 2:
          raise ValueError("Too few arguments (%d) for element!" % len(args))
@@ -58,6 +93,13 @@ class Element:
       return s
    
 class NodeSet:
+   """ A node set is a collection of nodes with a name.
+   It is possible to define specific boundary condition or load statements for all nodes within a node set.
+   As an example, in a shell model with intersections, a formulation is often used where nodes at
+   which intersections are present comprise 6 degrees of freedom, while other nodes comprise 5 DOFs.
+   By assigning all intersection nodes to a node set, the 6th DOF can be made available only on nodes in the
+   set while being locked on all other nodes. 
+   """
    def __init__(self, *args):
       self.nodes = []
       self.name = "Unnamed nset"
@@ -80,6 +122,10 @@ class NodeSet:
       return s
 
 class ElSet:
+   """ An ElSet (element set) is a collection of elements with a name.
+   It is mainly used to be able to assign a specific material number in FEAP to elements in a set
+   (setMat parameter).
+   """
    def __init__(self, *args):
       self.elems = []
       self.name = "Unnamed elset"
@@ -88,6 +134,9 @@ class ElSet:
       self.duplicate = []
       
 class AbaqusMesh:
+   """ An AbaqusMesh object gathers all mesh information from an Abaqus model which is currently
+   read from inp2feap, that is: Nodes, elements, node sets, element sets.   
+   """
    def __init__(self):
       self.nodes = []
       self.elems = []
@@ -95,6 +144,19 @@ class AbaqusMesh:
       self.elsets = []
       
 class InpFileParser:
+   """ This class serves to be able to read an Abaqus .inp-file as an input file and extract
+   all relevant information regarding nodes, elements, node sets, and element sets.
+   
+   It must be initialized with a filename. The number of nodes per element, 'nodesPerElem',
+   can be set or determined automatically. Currently, all elements must comprise the same number
+   of nodes.
+   The method Parse() then reads and interprets the .inp file, returning an AbaqusMesh object
+   on success.
+   
+   Some basic error handling and warning functionality is present and the parser has been tested
+   with several different input files. Nonetheless, careful inspection of the read data should
+   be carried out in case of any problems.
+   """
    READ_NODES = 1
    READ_ELEMS = 2
    READ_NSET = 3
@@ -102,6 +164,7 @@ class InpFileParser:
    UNKNOWN = 0
    
    def __init__(self, filename=None, nodesPerElem=None):
+      """ Initialize the parser with a filename and (optionally) number of nodes per element. """
       self.filename = filename
       self.nodesPerElem = nodesPerElem
       
@@ -238,6 +301,19 @@ class InpFileParser:
       return mesh
    
 class CustomInput:
+   """ This is a rudimentary helper class allowing to generating custom input blocks for FEAP input files.
+   It will just print the contents of its 'block' member variable to open the block (e.g. 'vbou' to start
+   defining additional boundary conditions) and continue printing 
+   
+   Important member variables:
+      - block     (str)            Type of input command (e.g. 'vbou', 'link', 'eloa', anything.
+      - cards     (list of strs)   List of input card as specified for the respective FEAP command,
+                                   separated by line breaks when written to the FEAP input file. 
+      - pos       (int)            Determines the position of the custom input block. If pos <= 0,
+                                   the custom input is written before applying boun/load commands
+                                   emanating from node sets. For pos > 0 it is written afterwards
+                                   (in this case, one could also include it into the footer).
+   """
    def __init__(self, block="UNKNOWN", pos=1, cards=[]):
       self.block = block
       self.pos = pos
@@ -250,6 +326,24 @@ class CustomInput:
       return s
             
 class ConfigFileParser:
+   """ Parser to read and interpret the JSON-style configuration file required to run this program.
+   That file includes all required information to completely convert an Abaqus '.inp' file to a FEAP
+   input file. It specifies the .inp-file, the file to write to, header and footer, and more. For a
+   complete list, refer to the project documentation.
+   Please note that the Python JSON parser is very restrictive, small syntax errors such as extra
+   commas at the end of a list may already lead to non-readable files.
+   
+   A ConfigFileParser object is initialized with the config file and invoked with Build(), which will
+   subsequently read and interpret the JSON config file, the Abaqus .inp file, header and footer
+   and assemble all information to produce the FEAP output file which is also specified in the JSON
+   config file.
+   Provided all input is correct and no errors occur, all what the inp2feap main routine does is
+   initializing a ConfigFileParser object with a JSON file specified as a command line parameter
+   or by interactive input and call Build().
+   
+   This class includes some definitions on how what it expects in the JSON config file. Make sure
+   to extend them when adding further functionality.
+   """
    REQUIRED_VARS = ["input", "output"]
    KNOWN_VARS = ["input", "output", "nodesPerElem", "header", "footer", "centerMesh", "elsets", "nsets", "customInput"]
    ASSUMED_TYPES = { "input" : str, "output" : str, "nodesPerElem" : int, "header" : str, "footer" : str, "centerMesh" : bool, "nsets" : list, "elsets" : list, "customInput" : dict}
@@ -285,6 +379,7 @@ class ConfigFileParser:
       pass
    
    def _ParseCustomInput(self, inp):
+      """ Parse JSON substring specifying a custom input. """
       for var in ConfigFileParser.CHILD_REQUIRED_VARS["customInput"]:
          if var not in inp.keys():
             print "Error: Required parameter '%s' not found in custom input. Aborting." % (var)
@@ -304,6 +399,7 @@ class ConfigFileParser:
 
    
    def _ParseElsets(self, elsets):
+      """ Parse JSON substring specifying an element set. """
       elsetObjs = []
       
       for elset in elsets:
@@ -332,6 +428,7 @@ class ConfigFileParser:
       return elsetObjs
    
    def _ParseNsets(self, nsets):
+      """ Parse JSON substring specifying a node set. """
       nsetObjs = []
       
       for nset in nsets:
@@ -360,6 +457,7 @@ class ConfigFileParser:
       return nsetObjs
    
    def _ParseConfig(self, confFile=None):
+      """ Invoked as a main routine to parse the specified JSON config file. """
       if confFile is not None: self.confFile = confFile
       if self.confFile is None:
          raise ValueError("Error: No config file specified for parser!")
@@ -418,12 +516,16 @@ class ConfigFileParser:
       return EXIT_SUCCESS
    
    def _ParseInputFile(self, inputFile):
+      """ Called to parse the Abaqus .inp file with the help of an InpFileParser object. """
       ifp = InpFileParser(inputFile)
       if self.nodesPerElem:
          ifp.nodesPerElem = self.nodesPerElem
       return ifp.Parse()
    
    def Build(self, confFile=None):
+      """ Execute the complete build process from .inp to FEAP. This is the only
+      function that should be invoked from outside. """
+      
       # parse conf file
       if EXIT_SUCCESS == self._ParseConfig(confFile):
          
