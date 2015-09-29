@@ -301,7 +301,7 @@ class InpFileParser:
       return mesh
    
 class CustomInput:
-   """ This is a rudimentary helper class allowing to generating custom input blocks for FEAP input files.
+   """ This is a rudimentary helper class allowing to generate custom input blocks for FEAP input files.
    It will just print the contents of its 'block' member variable to open the block (e.g. 'vbou' to start
    defining additional boundary conditions) and continue printing 
    
