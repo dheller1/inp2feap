@@ -28,9 +28,11 @@ EXIT_SUCCESS = 0
 EXIT_FAILURE = 1
 
 class Node:
-   """ A node in a finite element model is an entity comprising an id for identification and
+   """
+   A node in a finite element model is an entity comprising an id for identification and
    spatial coordinates (x,y) for 2d or (x,y,z) for 3d models, respectively. 
-   Nodes are connected to other nodes via elements to form the finite element mesh. """
+   Nodes are connected to other nodes via elements to form the finite element mesh.
+   """
    def __init__(self, *args):
       global xMin, xMax, yMin, yMax, zMin, zMax
       
@@ -58,7 +60,8 @@ class Node:
       return s
       
 class Element:
-   """ Nodes in a finite element model are connected via elements to form the mesh.
+   """
+   Nodes in a finite element model are connected via elements to form the mesh.
    The number of nodes per element (often called 'nel') can vary depending on the
    type of element (e.g. beam element with 2 nodes, quadrilateral shell element with
    4 nodes), the order of ansatz functions (quadratic beam: 3 nodes), and more.
@@ -93,7 +96,8 @@ class Element:
       return s
    
 class NodeSet:
-   """ A node set is a collection of nodes with a name.
+   """
+   A node set is a collection of nodes with a name.
    It is possible to define specific boundary condition or load statements for all nodes within a node set.
    As an example, in a shell model with intersections, a formulation is often used where nodes at
    which intersections are present comprise 6 degrees of freedom, while other nodes comprise 5 DOFs.
@@ -122,7 +126,8 @@ class NodeSet:
       return s
 
 class ElSet:
-   """ An ElSet (element set) is a collection of elements with a name.
+   """
+   An ElSet (element set) is a collection of elements with a name.
    It is mainly used to be able to assign a specific material number in FEAP to elements in a set
    (setMat parameter).
    """
@@ -134,7 +139,8 @@ class ElSet:
       self.duplicate = []
       
 class AbaqusMesh:
-   """ An AbaqusMesh object gathers all mesh information from an Abaqus model which is currently
+   """
+   An AbaqusMesh object gathers all mesh information from an Abaqus model which is currently
    read from inp2feap, that is: Nodes, elements, node sets, element sets.   
    """
    def __init__(self):
@@ -144,7 +150,8 @@ class AbaqusMesh:
       self.elsets = []
       
 class InpFileParser:
-   """ This class serves to be able to read an Abaqus .inp-file as an input file and extract
+   """
+   This class serves to be able to read an Abaqus .inp-file as an input file and extract
    all relevant information regarding nodes, elements, node sets, and element sets.
    
    It must be initialized with a filename. The number of nodes per element, 'nodesPerElem',
@@ -301,7 +308,8 @@ class InpFileParser:
       return mesh
    
 class CustomInput:
-   """ This is a rudimentary helper class allowing to generate custom input blocks for FEAP input files.
+   """
+   This is a rudimentary helper class allowing to generate custom input blocks for FEAP input files.
    It will just print the contents of its 'block' member variable to open the block (e.g. 'vbou' to start
    defining additional boundary conditions) and continue printing 
    
@@ -326,7 +334,8 @@ class CustomInput:
       return s
             
 class ConfigFileParser:
-   """ Parser to read and interpret the JSON-style configuration file required to run this program.
+   """
+   Parser to read and interpret the JSON-style configuration file required to run this program.
    That file includes all required information to completely convert an Abaqus '.inp' file to a FEAP
    input file. It specifies the .inp-file, the file to write to, header and footer, and more. For a
    complete list, refer to the project documentation.
@@ -523,8 +532,10 @@ class ConfigFileParser:
       return ifp.Parse()
    
    def Build(self, confFile=None):
-      """ Execute the complete build process from .inp to FEAP. This is the only
-      function that should be invoked from outside. """
+      """
+      Execute the complete build process from .inp to FEAP. This is the only
+      function that should be invoked from outside.
+      """
       
       # parse conf file
       if EXIT_SUCCESS == self._ParseConfig(confFile):
