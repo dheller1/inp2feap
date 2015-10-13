@@ -36,15 +36,16 @@ class Node:
    def __init__(self, *args):
       global xMin, xMax, yMin, yMax, zMin, zMax
       
+      if int(args[0]) < 0: raise ValueError("Negative node ID not supported.")
+      else: self.id = int(args[0])
+      
       if len(args) == 3: # id, x, y
          self.nDim = 2
-         self.id = int(args[0])
          self.x = float(args[1])
          self.y = float(args[2])
          
       elif len(args) == 4: # id, x, y, z
          self.nDim = 3
-         self.id = int(args[0])
          self.x = float(args[1])
          self.y = float(args[2])
          self.z = float(args[3])
@@ -68,7 +69,7 @@ class Element:
    
    Currently, all elements in a model read by inp2feap must have the same number of nodes.
    The order of nodes in the node list is not arbitrary, it can determine the element
-   orientation and might lead to errors if it is set not correctly.
+   orientation and might lead to errors if it is not set correctly.
    
    Important member variables:
       - id        (int)            Unique id to distinguish each element
