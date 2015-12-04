@@ -50,7 +50,7 @@ class RandomNodeTestCase(unittest.TestCase):
          nid = random.randint(1,100000000)
          args = [nid]
          for d in xrange(dim):
-            args.append(random.random()-0.5 * 200.) # random float between -100. and +100
+            args.append((random.random()-0.5) * 200.) # random float between -100. and +100
          
          node = inp2feap.Node(*args)
          self.testNodes.append(node)
